@@ -1,0 +1,96 @@
+services:
+  # 🗄️ Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: final-lab-set1-postgres-1
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks: [taskboard-net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 🔑 Auth Service
+  auth-service:
+    build: ./auth-service
+    container_name: final-lab-set1-auth-service-1
+    # เชื่อมไฟล์โค้ดในเครื่องเข้ากับ Container เพื่อให้ Hot Reload ได้
+    volumes:
+      - ./auth-service:/app
+      - /app/node_modules
+    environment:
+      DB_HOST: postgres
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [taskboard-net]
+
+  # 📋 Task Service
+  task-service:
+    build: ./task-service
+    container_name: final-lab-set1-task-service-1
+    volumes:
+      - ./task-service:/app
+      - /app/node_modules
+    environment:
+      DB_HOST: postgres
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [taskboard-net]
+
+  # 📝 Log Service
+  log-service:
+    build: ./log-service
+    container_name: final-lab-set1-log-service-1
+    volumes:
+      - ./log-service:/app
+      - /app/node_modules
+    environment:
+      DB_HOST: postgres
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [taskboard-net]
+
+  # 🖥️ Frontend
+  frontend:
+    build: ./frontend
+    container_name: final-lab-set1-frontend-1
+    # สำคัญมาก: เชื่อมไฟล์ index.html ให้ Browser เห็นตัวล่าสุดตลอดเวลา
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+    networks: [taskboard-net]
+
+  # 🛡️ Nginx (Gateway)
+  nginx:
+    build: ./nginx
+    container_name: final-lab-set1-nginx-1
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - auth-service
+      - task-service
+      - log-service
+      - frontend
+    networks: [taskboard-net]
+
+networks:
+  taskboard-net:
+    driver: bridge

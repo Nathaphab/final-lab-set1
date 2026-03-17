@@ -1,0 +1,38 @@
+require('dotenv').config();
+const express = require('express');
+const cors    = require('cors');
+const { pool } = require('./db/db');
+const authRouter = require('./routes/auth');
+
+const app  = express();
+const PORT = process.env.PORT || 3001;
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Routes
+app.use('/api/auth', authRouter);
+
+// ฟังก์ชันตรวจสอบการเชื่อมต่อ DB ก่อนเริ่ม Server
+async function start() {
+  let retries = 10;
+  while (retries > 0) {
+    try { 
+      await pool.query('SELECT 1'); 
+      console.log('✅ [auth-service] Database connected');
+      break; 
+    }
+    catch (e) {
+      console.log(`❌ [auth] Waiting DB... (${retries} left)`);
+      retries--;
+      await new Promise(r => setTimeout(r, 3000));
+    }
+  }
+  
+  app.listen(PORT, () => {
+    console.log(`🚀 [auth-service] Running on port :${PORT}`);
+  });
+}
+
+start();

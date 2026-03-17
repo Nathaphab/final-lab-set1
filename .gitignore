@@ -1,0 +1,14 @@
+# Dependency folders
+node_modules/
+dist/
+
+# Docker logs and temp files
+*.log
+.docker-ignore
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment variables (ถ้ามีไฟล์ .env ห้ามอัปเดตเด็ดขาด!)
+.env

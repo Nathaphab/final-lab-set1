@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Task Board</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .task-item { border-bottom: 1px solid #ddd; padding: 10px 0; display: flex; justify-content: space-between; }
+        .btn { padding: 5px 10px; cursor: pointer; }
+        input { padding: 8px; margin: 5px 0; width: 200px; display: block; }
+        .auth-box { padding: 20px; border: 1px solid #eee; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📋 My Task Board</h2>
+
+        <div id="auth-section" class="auth-box">
+            <div id="login-form">
+                <h3>Login</h3>
+                <input type="email" id="email" placeholder="Email">
+                <input type="password" id="password" placeholder="Password">
+                <button onclick="login()">Login</button>
+                <p>ยังไม่มีบัญชี? <a href="#" onclick="toggleAuth(true)">สมัครสมาชิกที่นี่</a></p>
+            </div>
+
+            <div id="register-form" style="display:none;">
+                <h3>Register</h3>
+                <input type="text" id="regUsername" placeholder="Username">
+                <input type="email" id="regEmail" placeholder="Email">
+                <input type="password" id="regPassword" placeholder="Password">
+                <button onclick="register()">Sign Up</button>
+                <p>มีบัญชีอยู่แล้ว? <a href="#" onclick="toggleAuth(false)">กลับไปหน้า Login</a></p>
+            </div>
+        </div>
+
+        <div id="task-section" style="display:none;">
+            <h4>ยินดีต้อนรับ, <span id="user-display"></span></h4>
+            <input type="text" id="taskTitle" placeholder="New Task Title" style="display:inline;">
+            <button onclick="addTask()">Add Task</button>
+            <div id="taskList"></div>
+            <br>
+            <button onclick="logout()" style="background:#ff4444; color:white;">Logout</button>
+        </div>
+    </div>
+
+<script>
+    const API_AUTH = '/api/auth';
+    const API_TASKS = '/api/tasks';
+
+    function toggleAuth(isRegister) {
+        document.getElementById('login-form').style.display = isRegister ? 'none' : 'block';
+        document.getElementById('register-form').style.display = isRegister ? 'block' : 'none';
+    }
+
+    async function register() {
+        const username = document.getElementById('regUsername').value;
+        const email = document.getElementById('regEmail').value;
+        const password = document.getElementById('regPassword').value;
+
+        try {
+            const res = await fetch(`${API_AUTH}/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password })
+            });
+
+            if (res.ok) {
+                alert('สมัครสมาชิกสำเร็จ! กรุณา Login');
+                toggleAuth(false);
+            } else {
+                const data = await res.json();
+                alert('Register Failed: ' + data.error);
+            }
+        } catch (err) { alert('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'); }
+    }
+
+    async function login() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        const res = await fetch(`${API_AUTH}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            localStorage.setItem('token', data.token); // เก็บ Token สำคัญมาก!
+            document.getElementById('user-display').innerText = data.user.username;
+            document.getElementById('auth-section').style.display = 'none';
+            document.getElementById('task-section').style.display = 'block';
+            loadTasks();
+        } else {
+            alert('Login Failed: ตรวจสอบ Email/Password หรือสมัครสมาชิกก่อน');
+        }
+    }
+
+    async function loadTasks() {
+        const res = await fetch(API_TASKS);
+        const tasks = await res.json();
+        const list = document.getElementById('taskList');
+        list.innerHTML = tasks.map(t => `<div class="task-item"><span>${t.title}</span> <b>${t.status}</b></div>`).join('');
+    }
+
+    async function addTask() {
+        const title = document.getElementById('taskTitle').value;
+        const token = localStorage.getItem('token');
+        await fetch(API_TASKS, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ title })
+        });
+        document.getElementById('taskTitle').value = '';
+        loadTasks();
+    }
+
+    function logout() {
+        localStorage.removeItem('token');
+        location.reload();
+    }
+</script>
+</body>
+</html>
