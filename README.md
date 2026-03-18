@@ -90,7 +90,7 @@ Frontend: HTML / CSS / JavaScript (Vanilla)
 
 Security: JWT (jsonwebtoken), bcryptjs, SSL/TLS
 
-7. การตั้งค่าและการรันระบบ
+# 7. การตั้งค่าและการรันระบบ
 7.1 สร้างไฟล์ .env
 Bash
 # Linux / macOS
@@ -124,3 +124,9 @@ Task Board: https://localhost
 Log Dashboard: https://localhost/logs.html
 
 หมายเหตุ: เนื่องจากใช้ self-signed certificate browser จะขึ้นคำเตือนความปลอดภัย ให้กด Advanced → Proceed to localhost เพื่อเข้าทดสอบ
+
+8. Seed Users สำหรับทดสอบ
+Username	Email	              Password	       Role
+alice	       alice@lab.local       1234                member
+bob	       bob@lab.local	        bob456	       member
+admin	       admin@lab.local	 adminpass	       admin
