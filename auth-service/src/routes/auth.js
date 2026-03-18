@@ -97,4 +97,35 @@ router.get('/verify', (req, res) => {
   }
 });
 
+// 📥 ดึงรายชื่อ User ทั้งหมด (เฉพาะ Admin เรียกใช้)
+router.get('/users', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT id, username, email, role FROM users ORDER BY id ASC');
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error fetching users:', err);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// 🗑️ DELETE /api/auth/users/:id - สำหรับ Admin ลบ User
+router.delete('/users/:id', async (req, res) => {
+    const userId = req.params.id;
+    try {
+        // ลบ User ตาม ID ที่ส่งมา
+        const result = await pool.query('DELETE FROM users WHERE id = $1 RETURNING *', [userId]);
+        
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'ไม่พบผู้ใช้งานที่ต้องการลบ' });
+        }
+
+        console.log(`✅ User ID ${userId} deleted by Admin`);
+        res.json({ message: 'ลบผู้ใช้งานสำเร็จ' });
+    } catch (err) {
+        console.error('❌ Error deleting user:', err);
+        // ถ้าลบไม่ได้ อาจเป็นเพราะ User นี้มีข้อมูลผูกกับตารางอื่น (Foreign Key)
+        res.status(500).json({ error: 'ไม่สามารถลบได้ เนื่องจากมีข้อมูลที่เกี่ยวข้องอยู่ในระบบ' });
+    }
+});
+
 module.exports = router;

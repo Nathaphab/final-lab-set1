@@ -6,10 +6,16 @@
     <style>
         body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
         .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .task-item { border-bottom: 1px solid #ddd; padding: 10px 0; display: flex; justify-content: space-between; }
+        .task-item { border-bottom: 1px solid #ddd; padding: 10px 0; display: flex; justify-content: space-between; align-items: center; }
         .btn { padding: 5px 10px; cursor: pointer; }
         input { padding: 8px; margin: 5px 0; width: 200px; display: block; }
         .auth-box { padding: 20px; border: 1px solid #eee; border-radius: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .admin-label { color: red; font-weight: bold; }
+        .delete-btn { background: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .delete-btn:hover { background: #cc0000; }
     </style>
 </head>
 <body>
@@ -37,11 +43,30 @@
 
         <div id="task-section" style="display:none;">
             <h4>ยินดีต้อนรับ, <span id="user-display"></span></h4>
-            <input type="text" id="taskTitle" placeholder="New Task Title" style="display:inline;">
-            <button onclick="addTask()">Add Task</button>
+            <div style="margin-bottom: 20px;">
+                <input type="text" id="taskTitle" placeholder="New Task Title" style="display:inline;">
+                <button onclick="addTask()">Add Task</button>
+            </div>
+            
             <div id="taskList"></div>
-            <br>
-            <button onclick="logout()" style="background:#ff4444; color:white;">Logout</button>
+            
+            <div id="admin-section" style="display:none; margin-top: 30px; border-top: 2px solid #333; padding-top: 20px;">
+                <h3 style="color: #d9534f;">👑 Admin Panel: User Management</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userList"></tbody>
+                </table>
+            </div>
+
+            <br><hr>
+            <button onclick="logout()" style="background:#666; color:white; border:none; padding: 10px; border-radius: 4px; cursor: pointer;">Logout</button>
         </div>
     </div>
 
@@ -80,33 +105,121 @@
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
 
-        const res = await fetch(`${API_AUTH}/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
+        try {
+            const res = await fetch(`${API_AUTH}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
 
-        if (res.ok) {
-            const data = await res.json();
-            localStorage.setItem('token', data.token); // เก็บ Token สำคัญมาก!
-            document.getElementById('user-display').innerText = data.user.username;
-            document.getElementById('auth-section').style.display = 'none';
-            document.getElementById('task-section').style.display = 'block';
-            loadTasks();
-        } else {
-            alert('Login Failed: ตรวจสอบ Email/Password หรือสมัครสมาชิกก่อน');
-        }
+            if (res.ok) {
+                const data = await res.json();
+                localStorage.setItem('token', data.token);
+                // 🛠️ แก้ไข: เก็บ role แทนชื่อ เพื่อความยืดหยุ่นในการเช็คสิทธิ์
+                localStorage.setItem('role', data.user.role); 
+                
+                document.getElementById('user-display').innerText = data.user.username;
+                document.getElementById('auth-section').style.display = 'none';
+                document.getElementById('task-section').style.display = 'block';
+
+                if (data.user.role === 'admin') {
+                    document.getElementById('admin-section').style.display = 'block';
+                    loadUsers();
+                }
+
+                loadTasks();
+            } else {
+                alert('Login Failed: ตรวจสอบ Email/Password');
+            }
+        } catch (err) { alert('Login Error: ' + err); }
     }
 
     async function loadTasks() {
         const res = await fetch(API_TASKS);
         const tasks = await res.json();
         const list = document.getElementById('taskList');
-        list.innerHTML = tasks.map(t => `<div class="task-item"><span>${t.title}</span> <b>${t.status}</b></div>`).join('');
+        
+        // 🛠️ แก้ไข: ดึง role มาเช็คสิทธิ์
+        const currentRole = localStorage.getItem('role');
+
+        list.innerHTML = tasks.map(t => `
+    <div class="task-item">
+        <span>
+            <strong>[ID: ${t.id}]</strong> ${t.title} - 
+            <b style="color: ${t.status === 'Approved' ? 'green' : 'orange'}">${t.status}</b>
+        </span>
+        <div>
+            ${currentRole === 'admin' && t.status !== 'Approved' ? 
+                `<button onclick="approveTask(${t.id})" style="background:green; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer; margin-right:5px;">อนุมัติ</button>` 
+                : ''}
+            
+            ${currentRole === 'admin' ? 
+                `<button class="delete-btn" onclick="deleteTask(${t.id})">ลบงาน</button>` 
+                : ''}
+        </div>
+    </div>
+`).join('');
+    }
+
+    async function deleteTask(id) {
+        if (!confirm(`ยืนยันการลบงาน ID: ${id}?`)) return;
+        try {
+            const res = await fetch(`${API_TASKS}/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                loadTasks(); 
+            } else {
+                alert('ลบไม่สำเร็จ');
+            }
+        } catch (err) { alert('Error: ' + err); }
+    }
+
+    async function approveTask(id) {
+    try {
+        const res = await fetch(`${API_TASKS}/${id}/approve`, {
+            method: 'PATCH' // ใช้ PATCH ตามที่เราเขียนไว้ใน Backend
+        });
+
+        if (res.ok) {
+            loadTasks(); // รีโหลดรายการเพื่อดูสถานะที่เปลี่ยนไป
+        } else {
+            alert('อนุมัติไม่สำเร็จ');
+        }
+    } catch (err) {
+        alert('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้');
+    }
+}
+    async function loadUsers() {
+        try {
+            const res = await fetch(`${API_AUTH}/users`);
+            const users = await res.json();
+            const list = document.getElementById('userList');
+            list.innerHTML = users.map(u => `
+                <tr>
+                    <td>${u.username}</td>
+                    <td>${u.email}</td>
+                    <td><span class="${u.role === 'admin' ? 'admin-label' : ''}">${u.role}</span></td>
+                    <td>
+                        ${u.role !== 'admin' ? `<button class="delete-btn" onclick="deleteUser(${u.id})">ลบผู้ใช้</button>` : '-'}
+                    </td>
+                </tr>
+            `).join('');
+        } catch (err) { console.error('Load Users Failed', err); }
+    }
+
+    async function deleteUser(id) {
+        if (!confirm('ยืนยันว่าจะลบผู้ใช้นี้?')) return;
+        try {
+            const res = await fetch(`${API_AUTH}/users/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                alert('ลบผู้ใช้สำเร็จ');
+                loadUsers();
+            }
+        } catch (err) { alert('ลบไม่สำเร็จ'); }
     }
 
     async function addTask() {
         const title = document.getElementById('taskTitle').value;
+        if (!title) return;
         const token = localStorage.getItem('token');
         await fetch(API_TASKS, {
             method: 'POST',
@@ -118,7 +231,7 @@
     }
 
     function logout() {
-        localStorage.removeItem('token');
+        localStorage.clear();
         location.reload();
     }
 </script>
