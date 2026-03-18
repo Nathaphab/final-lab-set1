@@ -94,3 +94,4 @@ services:
 networks:
   taskboard-net:
     driver: bridge
+
