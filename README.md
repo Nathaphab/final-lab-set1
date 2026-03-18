@@ -65,16 +65,49 @@ Browser / Postman
               PostgreSQL :5432 (Shared Database)
               • users table | • tasks table | • logs table
 
+---
+
 ## 5. โครงสร้าง Repository
-Plaintext
+```text
 final-lab-set1/
-├── nginx/               # Dockerfile (SSL Auto-gen) & nginx.conf
-├── frontend/            # Task Board UI & Logs Dashboard
-├── auth-service/        # Auth Service Source Code
-├── task-service/        # Task Service Source Code
-├── log-service/         # Log Service Source Code
-├── db/                  # init.sql (Schema + Seed Users)
-├── scripts/             # gen-certs.sh
-├── screenshots/         # หลักฐานการทดสอบ 12 รูป
-├── docker-compose.yml   # Docker Compose Config
-└── .env.example         # Template สำหรับ Environment Variables
+├── README.md
+├── TEAM_SPLIT.md
+├── INDIVIDUAL_REPORT_675432100286.md
+├── INDIVIDUAL_REPORT_675432100757.md
+├── docker-compose.yml
+├── .env.example
+├── .gitignore
+├── nginx/
+│   ├── Dockerfile          ← สร้าง SSL cert อัตโนมัติตอน build
+│   └── nginx.conf
+├── frontend/
+│   ├── Dockerfile
+│   ├── index.html          ← Task Board UI + JWT Inspector
+│   └── logs.html           ← Log Dashboard (admin only)
+├── auth-service/
+│   ├── Dockerfile
+│   ├── package.json
+│   └── src/
+│       ├── index.js
+│       ├── routes/auth.js
+│       ├── middleware/jwtUtils.js
+│       └── db/db.js
+├── task-service/
+│   ├── Dockerfile
+│   ├── package.json
+│   └── src/
+│       ├── index.js
+│       ├── routes/tasks.js
+│       ├── middleware/authMiddleware.js
+│       ├── middleware/jwtUtils.js
+│       └── db/db.js
+├── log-service/
+│   ├── Dockerfile
+│   ├── package.json
+│   └── src/index.js
+├── db/
+│   └── init.sql            ← Schema + Seed Users (bcrypt hash พร้อมใช้)
+├── scripts/
+│   └── gen-certs.sh        ← สำหรับ Linux/macOS (Windows ไม่จำเป็น)
+└── screenshots/
+    └── (ภาพหลักฐาน 12 รูป)
