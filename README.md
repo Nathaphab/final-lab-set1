@@ -64,5 +64,17 @@ Browser / Postman
                        │
               PostgreSQL :5432 (Shared Database)
               • users table | • tasks table | • logs table
+# 5. โครงสร้าง Repository
+final-lab-set1/
+├── nginx/              # Nginx config & self-signed certs
+├── frontend/           # Static HTML (Task Board & Log Dashboard)
+├── auth-service/       # Node.js + Express (Login, JWT)
+├── task-service/       # Node.js + Express (CRUD Tasks)
+├── log-service/        # Node.js + Express (Internal logging & Admin API)
+├── db/                 # PostgreSQL init script (Schema & Seed users)
+├── scripts/            # Bash script สำหรับ Gen SSL Certificate
+├── screenshots/        # รูปภาพหลักฐานการทดสอบระบบ
+├── docker-compose.yml  # Docker deployment config
+└── README.md           # โปรเจกต์ Document
 
 
