@@ -8,7 +8,6 @@
 ## 1. ข้อมูลรายวิชาและสมาชิก
 * **รายวิชา:** ENGSE207 Software Architecture
 * **ชื่องาน:** Final Lab — ชุดที่ 1: Microservices + HTTPS + Lightweight Logging
-* **Repository:** `final-lab-set1/`
 
 ### สมาชิกในกลุ่ม
 | ลำดับ | ชื่อ-นามสกุล | รหัสนักศึกษา |
@@ -16,20 +15,31 @@
 | 1 | นาย ณฐภาพ สายหล้า | 67543210054-2 |
 | 2 | นางสาว วรินทร เครืออินตา | 67543210065-8 |
 
+**Repository:** `final-lab-set1/`
+
 ---
 
 ## 2. ภาพรวมของระบบ
 Final Lab ชุดที่ 1 เป็นการพัฒนาระบบ Task Board แบบ Microservices โดยเน้นหัวข้อสำคัญดังนี้:
-* **การทำงานแบบแยก Service:** แบ่งหน้าที่ชัดเจน (Auth, Task, Log)
-* **Nginx API Gateway:** ใช้เป็นทางเข้าเดียวของระบบ
-* **HTTPS:** เปิดใช้งาน TLS ด้วย Self-Signed Certificate (สร้างอัตโนมัติตอน Build)
-* **JWT Authentication:** ยืนยันตัวตนและกำหนดสิทธิ์การเข้าถึง API
-* **Lightweight Logging:** ระบบจัดเก็บ Log กิจกรรมต่างๆ ลงฐานข้อมูลผ่าน Log Service
-* **Shared Database:** ใช้ PostgreSQL 15 ร่วมกันในการจัดเก็บข้อมูล
+* **การทำงานแบบแยก Service:** แยกหน้าที่ความรับผิดชอบชัดเจน
+* **API Gateway:** ใช้ Nginx เป็นประตูหลักของระบบ
+* **HTTPS:** เปิดใช้งานด้วย Self-Signed Certificate (สร้างอัตโนมัติตอน Docker build)
+* **Authentication:** ยืนยันตัวตนด้วย JWT (JSON Web Token)
+* **Lightweight Logging:** จัดเก็บ Log กิจกรรมผ่าน Log Service ลงฐานข้อมูล
+* **Frontend/Backend Sync:** เชื่อมต่อผ่าน HTTPS และจัดการปัญหา CORS ด้วย Reverse Proxy
 
 ---
 
-## 3. Architecture Overview
+## 3. วัตถุประสงค์ของงาน
+* ออกแบบระบบแบบ Microservices ในระดับพื้นฐาน
+* ใช้ Nginx สำหรับ Reverse Proxy และ TLS Termination
+* ใช้ JWT สำหรับ Authentication ระหว่าง Service
+* ออกแบบ Logging Flow ผ่าน REST API
+* ใช้ Docker Compose ในการจัดการ Container Orchestration
+
+---
+
+## 4. Architecture Overview
 
 ```text
 Browser / Postman
@@ -53,3 +63,18 @@ Browser / Postman
        └───────────────┴──────────────────┘
                        │
               PostgreSQL :5432 (Shared Database)
+              • users table | • tasks table | • logs table
+
+## 5. โครงสร้าง Repository
+Plaintext
+final-lab-set1/
+├── nginx/               # Dockerfile (SSL Auto-gen) & nginx.conf
+├── frontend/            # Task Board UI & Logs Dashboard
+├── auth-service/        # Auth Service Source Code
+├── task-service/        # Task Service Source Code
+├── log-service/         # Log Service Source Code
+├── db/                  # init.sql (Schema + Seed Users)
+├── scripts/             # gen-certs.sh
+├── screenshots/         # หลักฐานการทดสอบ 12 รูป
+├── docker-compose.yml   # Docker Compose Config
+└── .env.example         # Template สำหรับ Environment Variables
