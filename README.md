@@ -77,4 +77,33 @@ final-lab-set1/
 ├── docker-compose.yml  # Docker deployment config
 └── README.md           # โปรเจกต์ Document
 
+# 6. เทคโนโลยีที่ใช้
+Backend: Node.js / Express.js
+
+Database: PostgreSQL 15
+
+Gateway/Proxy: Nginx 1.25
+
+Orchestration: Docker / Docker Compose
+
+Frontend: HTML / CSS / JavaScript (Vanilla)
+
+Security: JWT (jsonwebtoken), bcryptjs, SSL/TLS
+
+7. การตั้งค่าและการรันระบบ
+7.1 สร้างไฟล์ .env
+Bash
+# Linux / macOS
+cp .env.example .env
+
+# Windows PowerShell
+copy .env.example .env
+ค่าใน .env.example:
+
+Plaintext
+POSTGRES_DB=taskboard
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=secret123
+JWT_SECRET=engse207-super-secret-change-me
+JWT_EXPIRES=1h
 
