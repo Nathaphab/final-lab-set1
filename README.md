@@ -107,3 +107,20 @@ POSTGRES_PASSWORD=secret123
 JWT_SECRET=engse207-super-secret-change-me
 JWT_EXPIRES=1h
 
+7.2 รันระบบ
+หมายเหตุ: ไม่จำเป็นต้องรัน gen-certs.sh ก่อน เพราะ Nginx Dockerfile สร้าง SSL certificate ให้อัตโนมัติตอน build
+
+Bash
+docker compose up --build
+
+7.3 รีเซ็ตฐานข้อมูล (ถ้าต้องการเริ่มใหม่)
+Bash
+docker compose down -v
+docker compose up --build
+
+7.4 เปิดใช้งานผ่าน Browser
+Task Board: https://localhost
+
+Log Dashboard: https://localhost/logs.html
+
+หมายเหตุ: เนื่องจากใช้ self-signed certificate browser จะขึ้นคำเตือนความปลอดภัย ให้กด Advanced → Proceed to localhost เพื่อเข้าทดสอบ
